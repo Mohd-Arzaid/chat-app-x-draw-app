@@ -3,10 +3,9 @@ import jwt from "jsonwebtoken";
 import { middleware } from "./middleware";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { CreateUserSchema } from "@repo/common/types";
+import { prismaClient } from "@repo/db/client";
 
 const app = express();
-
-console.log(JWT_SECRET);
 
 app.post("/signup", (req, res) => {
   const data = CreateUserSchema.safeParse(req.body);
@@ -15,6 +14,10 @@ app.post("/signup", (req, res) => {
       message: "Incorrect inputs",
     });
   }
+
+  prismaClient.user.create({
+    
+  })
 
   // db call
   res.json({

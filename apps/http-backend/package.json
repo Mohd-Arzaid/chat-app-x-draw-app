@@ -15,7 +15,8 @@
     "jsonwebtoken": "^9.0.3",
     "@repo/backend-common": "*",
     "@repo/typescript-config": "*",
-    "@repo/common": "*"
+    "@repo/common": "*",
+    "@repo/db":"*"
   },
   "keywords": [],
   "author": "",
