@@ -8,16 +8,20 @@ import { prismaClient } from "@repo/db/client";
 const app = express();
 
 app.post("/signup", (req, res) => {
-  const data = CreateUserSchema.safeParse(req.body);
-  if (!data.success) {
+  const parsedData = CreateUserSchema.safeParse(req.body);
+  if (!parsedData.success) {
     return res.json({
       message: "Incorrect inputs",
     });
   }
 
   prismaClient.user.create({
-    
-  })
+    data: {
+      email: parsedData.data.email,
+      password: parsedData.data.password,
+      name: parsedData.data.name,
+    },
+  });
 
   // db call
   res.json({
