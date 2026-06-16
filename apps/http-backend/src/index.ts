@@ -2,12 +2,18 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import { middleware } from "./middleware";
 import { JWT_SECRET } from "@repo/backend-common/config";
-import { CreateUserSchema } from "@repo/common/types";
+import {
+  CreateRoomSchema,
+  CreateUserSchema,
+  LoginSchema,
+} from "@repo/common/types";
 import { prismaClient } from "@repo/db/client";
+import bcrypt from "bcrypt";
 
 const app = express();
+app.use(express.json());
 
-app.post("/signup", (req, res) => {
+app.post("/signup", async (req, res) => {
   const parsedData = CreateUserSchema.safeParse(req.body);
   if (!parsedData.success) {
     return res.json({
@@ -15,25 +21,53 @@ app.post("/signup", (req, res) => {
     });
   }
 
-  prismaClient.user.create({
-    data: {
+  // hash the password using bcrypt
+  const hashedPassword = await bcrypt.hash(parsedData.data.password, 10);
+  try {
+    const user = await prismaClient.user.create({
+      data: {
+        email: parsedData.data.email,
+        password: hashedPassword,
+        name: parsedData.data.name,
+      },
+    });
+    res.json({
+      userId: user.id,
+    });
+  } catch (error) {
+    res.status(411).json({
+      message: "User already exists with this email",
+    });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  const parsedData = LoginSchema.safeParse(req.body);
+  if (!parsedData.success) {
+    res.json({
+      message: "Incorrect inputs",
+    });
+    return;
+  }
+
+  // TODO :  Compare the password with the hashed password
+
+  const user = await prismaClient.user.findFirst({
+    where: {
       email: parsedData.data.email,
-      password: parsedData.data.password,
-      name: parsedData.data.name,
     },
   });
 
-  // db call
-  res.json({
-    userId: 123,
-  });
-});
+  if (!user) {
+    res.status(403).json({
+      message: "Not Authorized",
+    });
+    return;
+  }
 
-app.post("/login", (req, res) => {
-  const userId = 1;
   const token = jwt.sign(
     {
-      userId,
+      userId: user?.id,
     },
     JWT_SECRET
   );
@@ -42,10 +76,35 @@ app.post("/login", (req, res) => {
   });
 });
 
-app.post("/create-room", middleware, (req, res) => {
-  res.json({
-    roomId: 123,
-  });
+app.post("/create-room", middleware, async (req, res) => {
+  const parsedData = CreateRoomSchema.safeParse(req.body);
+  if (!parsedData.success) {
+    res.json({
+      message: "Incorrect inputs",
+    });
+    return;
+  }
+
+  // @ts-ignore
+  const userId = req.userId;
+
+  try {
+    const room = await prismaClient.room.create({
+      data: {
+        slug: parsedData.data.slug,
+        userId: userId,
+      },
+    });
+
+    res.json({
+      roomId: room.id,
+    });
+  } catch (error) {
+    res.status(403).json({
+      message: "Room already exists with this slug",
+    });
+    return;
+  }
 });
 
 app.listen(3001, () => {
