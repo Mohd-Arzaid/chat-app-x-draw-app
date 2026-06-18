@@ -107,6 +107,30 @@ app.post("/create-room", middleware, async (req, res) => {
   }
 });
 
+// Get message on descending order based on id at last 50 messages from a room 
+app.get("/chats/:roomId", async (req, res) => {
+  const roomId = Number(req.params.roomId);
+
+  try {
+    const messages = await prismaClient.chat.findMany({
+      where: {
+        roomId: roomId,
+      },
+      orderBy: {
+        id: "desc",
+      },
+      take: 50,
+    });
+    res.json({
+      messages,
+    });
+  } catch (error) {
+    res.status(403).json({
+      message: "No messages found",
+    });
+  }
+});
+
 app.listen(3001, () => {
   console.log("Server is running on port 3001");
 });
