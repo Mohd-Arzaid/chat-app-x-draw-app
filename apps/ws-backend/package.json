@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@repo/backend-common": "*",
+    "@repo/db": "*",
     "@repo/typescript-config": "*"
   },
   "keywords": [],
