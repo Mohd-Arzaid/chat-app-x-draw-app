@@ -107,7 +107,7 @@ app.post("/create-room", middleware, async (req, res) => {
   }
 });
 
-// Get message on descending order based on id at last 50 messages from a room 
+// Get the last 50 messages from a room, ordered by id in descending order.
 app.get("/chats/:roomId", async (req, res) => {
   const roomId = Number(req.params.roomId);
 
@@ -127,6 +127,27 @@ app.get("/chats/:roomId", async (req, res) => {
   } catch (error) {
     res.status(403).json({
       message: "No messages found",
+    });
+  }
+});
+
+
+// Get the room by slug
+app.get("/room/:slug", async (req, res) => {
+  const slug = req.params.slug;
+  try {
+    const room = await prismaClient.room.findUnique({
+      where: {
+        slug,
+      },
+    });
+
+    res.json({
+      room,
+    });
+  } catch (error) {
+    res.status(403).json({
+      message: "Room not found",
     });
   }
 });
